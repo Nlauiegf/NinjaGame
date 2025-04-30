@@ -147,7 +147,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f7e3a1bac9704046921de317e4b4e13, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelFileName: HomeScreen-1.png
+  levelFileName: HomeScreen-1.png.png
   colorToPrefab:
   - color:
       serializedVersion: 2

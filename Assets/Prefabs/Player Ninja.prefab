@@ -161,6 +161,8 @@ MonoBehaviour:
   <MoveSpeed>k__BackingField: 5
   <WallJumpForce>k__BackingField: 7.5
   <MaxJumps>k__BackingField: 2
+  projectilePrefab: {fileID: 3594860048709693670, guid: bafe564409be34775b575899a657c4e4, type: 3}
+  chargeTime: 2
   playerCollider: {fileID: 1779346489392483852}
   standingColliderSize: {x: 1, y: 2}
   standingColliderOffset: {x: 0, y: 0}

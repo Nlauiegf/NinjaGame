@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 // Base class for all player states
 public abstract class PlayerBaseState
@@ -37,6 +38,8 @@ public class PlayerStateMachine : MonoBehaviour
     private float currentCharge = 0f;
     private bool isCharging = false;
     private Camera mainCamera;
+    private GameObject chargeUI;
+    private Image chargeFillImage;
 
     [Header("Collider Settings")]
     [SerializeField] private CapsuleCollider2D playerCollider; // Assign in Inspector
@@ -144,6 +147,8 @@ public class PlayerStateMachine : MonoBehaviour
         JumpsRemaining = MaxJumps;
 
         mainCamera = Camera.main;
+        // Create charge meter UI
+        CreateChargeMeterUI();
     }
 
     private void Start()
@@ -190,6 +195,14 @@ public class PlayerStateMachine : MonoBehaviour
             }
             isCharging = false;
             currentCharge = 0f;
+        }
+
+        // Update charge UI
+        if (chargeUI != null)
+        {
+            chargeUI.SetActive(isCharging);
+            if (isCharging && chargeFillImage != null)
+                chargeFillImage.fillAmount = Mathf.Clamp01(currentCharge / chargeTime);
         }
     }
 
@@ -289,7 +302,10 @@ public class PlayerStateMachine : MonoBehaviour
 
     private void ShootProjectileAtCursor()
     {
-        if (projectilePrefab == null) return;
+        if (projectilePrefab == null) {
+            Debug.LogWarning("projectilePrefab is not assigned on PlayerStateMachine!");
+            return;
+        }
         Vector3 mouseScreenPos = Input.mousePosition;
         Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, Mathf.Abs(mainCamera.transform.position.z)));
         Vector2 direction = (mouseWorldPos - transform.position).normalized;
@@ -298,8 +314,48 @@ public class PlayerStateMachine : MonoBehaviour
         if (rb != null)
         {
             float projectileSpeed = 10f;
-            rb.velocity = direction * projectileSpeed;
+            rb.linearVelocity = direction * projectileSpeed;
         }
+    }
+
+    private void CreateChargeMeterUI()
+    {
+        // Only create if not already present
+        if (GameObject.Find("ChargeMeterUI") != null) return;
+        // Create Canvas
+        GameObject canvasGO = new GameObject("ChargeMeterUI");
+        Canvas canvas = canvasGO.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        canvasGO.AddComponent<GraphicRaycaster>();
+        // Create background
+        GameObject bgGO = new GameObject("ChargeMeterBG");
+        bgGO.transform.SetParent(canvasGO.transform);
+        Image bgImage = bgGO.AddComponent<Image>();
+        bgImage.color = new Color(0,0,0,0.5f);
+        RectTransform bgRect = bgGO.GetComponent<RectTransform>();
+        bgRect.anchorMin = new Vector2(0.5f, 1f);
+        bgRect.anchorMax = new Vector2(0.5f, 1f);
+        bgRect.pivot = new Vector2(0.5f, 1f);
+        bgRect.anchoredPosition = new Vector2(0, -20);
+        bgRect.sizeDelta = new Vector2(200, 20);
+        // Create fill
+        GameObject fillGO = new GameObject("ChargeMeterFill");
+        fillGO.transform.SetParent(bgGO.transform);
+        chargeFillImage = fillGO.AddComponent<Image>();
+        chargeFillImage.color = Color.cyan;
+        chargeFillImage.type = Image.Type.Filled;
+        chargeFillImage.fillMethod = Image.FillMethod.Horizontal;
+        chargeFillImage.fillOrigin = (int)Image.OriginHorizontal.Left;
+        chargeFillImage.fillAmount = 0f;
+        RectTransform fillRect = fillGO.GetComponent<RectTransform>();
+        fillRect.anchorMin = new Vector2(0,0);
+        fillRect.anchorMax = new Vector2(1,1);
+        fillRect.offsetMin = Vector2.zero;
+        fillRect.offsetMax = Vector2.zero;
+        chargeUI = canvasGO;
+        chargeUI.SetActive(false);
     }
 
 }

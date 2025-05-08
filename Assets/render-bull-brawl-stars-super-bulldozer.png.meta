@@ -160,7 +160,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      render-bull-brawl-stars-super-bulldozer_0: -4190839884235874122
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -58,6 +58,13 @@ public class LevelLoader : MonoBehaviour {
 
 			}
 		}
+
+		// Tell the camera to reset its player target
+		CameraFollow camFollow = FindObjectOfType<CameraFollow>();
+		if (camFollow != null)
+		{
+			camFollow.ResetPlayerTarget();
+		}
 	}
 
 	void SpawnTileAt( Color32 c, int x, int y ) {

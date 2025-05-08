@@ -28,6 +28,15 @@ public class PlayerStateMachine : MonoBehaviour
     [field: SerializeField] public float WallJumpForce { get; private set; } = 7.5f;
     [field: SerializeField] public int MaxJumps { get; private set; } = 2; // 1 = no double jump, 2 = double jump
     public int JumpsRemaining { get; set; }
+    public bool CanDash { get; set; } = false;
+
+    // --- Charge Shot ---
+    [Header("Charge Shot Settings")]
+    public GameObject projectilePrefab;
+    public float chargeTime = 2f;
+    private float currentCharge = 0f;
+    private bool isCharging = false;
+    private Camera mainCamera;
 
     [Header("Collider Settings")]
     [SerializeField] private CapsuleCollider2D playerCollider; // Assign in Inspector
@@ -133,6 +142,8 @@ public class PlayerStateMachine : MonoBehaviour
 
         // Initialize jumps
         JumpsRemaining = MaxJumps;
+
+        mainCamera = Camera.main;
     }
 
     private void Start()
@@ -158,6 +169,28 @@ public class PlayerStateMachine : MonoBehaviour
         wasGroundedLastFrame = isGroundedNow;
 
         currentState?.Tick(Time.deltaTime);
+
+        // Charge meter logic
+        if (Input.GetMouseButtonDown(0))
+        {
+            isCharging = true;
+            currentCharge = 0f;
+        }
+        if (isCharging && Input.GetMouseButton(0))
+        {
+            currentCharge += Time.deltaTime;
+            if (currentCharge > chargeTime)
+                currentCharge = chargeTime;
+        }
+        if (isCharging && Input.GetMouseButtonUp(0))
+        {
+            if (currentCharge >= chargeTime)
+            {
+                ShootProjectileAtCursor();
+            }
+            isCharging = false;
+            currentCharge = 0f;
+        }
     }
 
     public void SwitchState(PlayerBaseState newState)
@@ -252,6 +285,21 @@ public class PlayerStateMachine : MonoBehaviour
         Collider2D hit = Physics2D.OverlapBox(checkCenter, checkSize, 0f, groundLayer);
 
         return hit == null; // Can stand up if nothing is hit
+    }
+
+    private void ShootProjectileAtCursor()
+    {
+        if (projectilePrefab == null) return;
+        Vector3 mouseScreenPos = Input.mousePosition;
+        Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, Mathf.Abs(mainCamera.transform.position.z)));
+        Vector2 direction = (mouseWorldPos - transform.position).normalized;
+        GameObject proj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
+        Rigidbody2D rb = proj.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            float projectileSpeed = 10f;
+            rb.velocity = direction * projectileSpeed;
+        }
     }
 
 }

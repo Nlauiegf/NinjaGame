@@ -26,7 +26,8 @@ public class PlayerStateMachine : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == "Coin"){
+        if (other.gameObject.tag == "Coin")
+        {
             Destroy(other.gameObject);
             coinCount++;
             UpdateCoinUI();

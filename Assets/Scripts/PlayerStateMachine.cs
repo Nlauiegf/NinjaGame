@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using Unity.VisualScripting;
 
 // Base class for all player states
 public abstract class PlayerBaseState
@@ -20,6 +21,17 @@ public abstract class PlayerBaseState
 // The main state machine component
 public class PlayerStateMachine : MonoBehaviour
 {
+    private int coinCount = 0;
+    private Text coinText;
+
+    void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.tag == "Coin"){
+            Destroy(other.gameObject);
+            coinCount++;
+            UpdateCoinUI();
+        }
+    }
     private bool wasGroundedLastFrame = true;
 
     // --- Coyote time (grounded grace period) ---
@@ -176,6 +188,8 @@ public class PlayerStateMachine : MonoBehaviour
         mainCamera = Camera.main;
         // Create charge meter UI
         CreateChargeMeterUI();
+        // Create coin counter UI
+        CreateCoinCounterUI();
     }
 
     private void Start()
@@ -202,11 +216,12 @@ public class PlayerStateMachine : MonoBehaviour
 
         currentState?.Tick(Time.deltaTime);
 
-        // Update charge UI
+        // Robust charge UI: show if in ShootState, always update fill
         if (chargeUI != null)
         {
-            chargeUI.SetActive(isCharging);
-            if (isCharging && chargeFillImage != null)
+            bool inShootState = currentState == ShootState;
+            chargeUI.SetActive(inShootState);
+            if (chargeFillImage != null)
                 chargeFillImage.fillAmount = Mathf.Clamp01(currentCharge / chargeTime);
         }
     }
@@ -371,4 +386,46 @@ public class PlayerStateMachine : MonoBehaviour
         chargeUI.SetActive(false);
     }
 
+    private void CreateCoinCounterUI()
+    {
+        // Try to find the existing Canvas
+        Canvas canvas = null;
+        GameObject canvasGO = GameObject.Find("ChargeMeterUI");
+        if (canvasGO != null)
+        {
+            canvas = canvasGO.GetComponent<Canvas>();
+        }
+        if (canvas == null)
+        {
+            // Fallback: create a new canvas if not found
+            canvasGO = new GameObject("CoinUICanvas");
+            canvas = canvasGO.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvasGO.AddComponent<CanvasScaler>();
+            canvasGO.AddComponent<GraphicRaycaster>();
+        }
+        // Create the coin text
+        GameObject coinTextGO = new GameObject("CoinText");
+        coinTextGO.transform.SetParent(canvas.transform);
+        coinText = coinTextGO.AddComponent<Text>();
+        coinText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        coinText.fontSize = 24;
+        coinText.color = Color.yellow;
+        coinText.alignment = TextAnchor.UpperLeft;
+        RectTransform rect = coinText.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0, 1);
+        rect.anchorMax = new Vector2(0, 1);
+        rect.pivot = new Vector2(0, 1);
+        rect.anchoredPosition = new Vector2(10, -10);
+        rect.sizeDelta = new Vector2(160, 40);
+        UpdateCoinUI();
+    }
+
+    private void UpdateCoinUI()
+    {
+        if (coinText != null)
+        {
+            coinText.text = $"Coins: {coinCount}";
+        }
+    }
 }

@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8656897855401627188}
   - component: {fileID: 2324254654297447847}
   m_Layer: 0
-  m_Name: download (2)_0
+  m_Name: Portal to 1-1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -79,7 +79,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: -2496040466669729985, guid: 33b363f1f4cbc4d3cbae0e9bdb89d48e, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 0, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

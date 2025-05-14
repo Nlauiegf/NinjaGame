@@ -40,6 +40,33 @@ public class PlayerStateMachine : MonoBehaviour
     private Camera mainCamera;
     private GameObject chargeUI;
     private Image chargeFillImage;
+    public bool IsCharging => isCharging;
+    public float CurrentCharge => currentCharge;
+    public float ChargeTime => chargeTime;
+    public void HandleChargeInput()
+    {
+        // Charge meter logic (only called from ShootState)
+        if (Input.GetMouseButtonDown(0))
+        {
+            isCharging = true;
+            currentCharge = 0f;
+        }
+        if (isCharging && Input.GetMouseButton(0))
+        {
+            currentCharge += Time.deltaTime;
+            if (currentCharge > chargeTime)
+                currentCharge = chargeTime;
+        }
+        if (isCharging && Input.GetMouseButtonUp(0))
+        {
+            if (currentCharge >= chargeTime)
+            {
+                ShootProjectileAtCursor();
+            }
+            isCharging = false;
+            currentCharge = 0f;
+        }
+    }
 
     [Header("Collider Settings")]
     [SerializeField] private CapsuleCollider2D playerCollider; // Assign in Inspector
@@ -175,28 +202,6 @@ public class PlayerStateMachine : MonoBehaviour
 
         currentState?.Tick(Time.deltaTime);
 
-        // Charge meter logic
-        if (Input.GetMouseButtonDown(0))
-        {
-            isCharging = true;
-            currentCharge = 0f;
-        }
-        if (isCharging && Input.GetMouseButton(0))
-        {
-            currentCharge += Time.deltaTime;
-            if (currentCharge > chargeTime)
-                currentCharge = chargeTime;
-        }
-        if (isCharging && Input.GetMouseButtonUp(0))
-        {
-            if (currentCharge >= chargeTime)
-            {
-                ShootProjectileAtCursor();
-            }
-            isCharging = false;
-            currentCharge = 0f;
-        }
-
         // Update charge UI
         if (chargeUI != null)
         {
@@ -306,6 +311,10 @@ public class PlayerStateMachine : MonoBehaviour
             Debug.LogWarning("projectilePrefab is not assigned on PlayerStateMachine!");
             return;
         }
+        if (mainCamera == null) {
+            Debug.LogWarning("mainCamera is not assigned or found!");
+            return;
+        }
         Vector3 mouseScreenPos = Input.mousePosition;
         Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, Mathf.Abs(mainCamera.transform.position.z)));
         Vector2 direction = (mouseWorldPos - transform.position).normalized;
@@ -315,6 +324,10 @@ public class PlayerStateMachine : MonoBehaviour
         {
             float projectileSpeed = 10f;
             rb.linearVelocity = direction * projectileSpeed;
+        }
+        else
+        {
+            Debug.LogWarning("Instantiated projectile does not have a Rigidbody2D component!");
         }
     }
 

@@ -17,8 +17,7 @@ public class ShootState : PlayerBaseState
     public override void Tick(float deltaTime)
     {
         // Logic during the shoot state (e.g., handle firing cooldown, check ammo)
-
-        // Check for transitions out of the shoot state
+        stateMachine.HandleChargeInput();
         // Check for transitions out of the shoot state
         CheckSwitchStates(); // We'll keep this helper method for clarity
     }

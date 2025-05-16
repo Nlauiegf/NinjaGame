@@ -187,7 +187,7 @@ MonoBehaviour:
   - color:
       serializedVersion: 2
       rgba: 4294902015
-    prefab: {fileID: 8211026086090891476, guid: c189853c9681e4d74b0cf479f538df04, type: 3}
+    prefab: {fileID: 7470062290011736743, guid: 3300f5eb432e6490392af390ac466473, type: 3}
   - color:
       serializedVersion: 2
       rgba: 4284703587
@@ -200,6 +200,10 @@ MonoBehaviour:
       serializedVersion: 2
       rgba: 4294770943
     prefab: {fileID: 7923694483914724619, guid: 839855bb500cf45bbbfcb4503efb5c45, type: 3}
+  - color:
+      serializedVersion: 2
+      rgba: 4294639871
+    prefab: {fileID: 8211026086090891476, guid: c189853c9681e4d74b0cf479f538df04, type: 3}
 --- !u!1 &2069230238
 GameObject:
   m_ObjectHideFlags: 0

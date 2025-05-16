@@ -22,9 +22,9 @@ public class JumpState : PlayerBaseState
         stateMachine.GetType().GetField("jumpGroundedGraceTimer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
             ?.SetValue(stateMachine, 0.10f);
 
-        // Play jump animation
+        // Always play jump animation
         if (stateMachine.Animator != null)
-            stateMachine.Animator.Play("JumpAnimation");
+            stateMachine.Animator.Play("Jump");
         Debug.Log($"[JumpState] Entering Jump State at {enterTime:F2}s");
 
         // If grounded, set jumps to MaxJumps - 1 (so the ground jump counts as the first jump)
@@ -97,7 +97,12 @@ public class JumpState : PlayerBaseState
         float targetVelocityX = moveInputAir.x * stateMachine.MoveSpeed; // Use base MoveSpeed for air control, adjust if needed
         stateMachine.RB.linearVelocity = new Vector2(targetVelocityX, stateMachine.RB.linearVelocity.y); // Preserve Y velocity
 
-    
+        // Flip sprite based on direction
+        if (moveInputAir.x > 0.01f)
+            stateMachine.transform.localScale = new Vector3(1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
+        else if (moveInputAir.x < -0.01f)
+            stateMachine.transform.localScale = new Vector3(-1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
+
         // If grounded, reset jumps and transition to Idle/Walk/Run
         if (stateMachine.IsGrounded())
         {
@@ -125,6 +130,17 @@ public class JumpState : PlayerBaseState
         {
             stateMachine.SwitchState(stateMachine.FallState);
             return;
+        }
+
+        // Play correct animation based on vertical velocity
+        if (stateMachine.Animator != null)
+        {
+            float vy = stateMachine.RB.linearVelocity.y;
+            Animator anim = stateMachine.Animator;
+            if (vy > 0.01f)
+                anim.Play("Jump");
+            else if (vy < -0.01f)
+                anim.Play("Fall");
         }
     }
 

@@ -11,7 +11,7 @@ public class FallState : PlayerBaseState
         enterTime = Time.time;
         // Play fall animation if available
         if (stateMachine.Animator != null)
-            stateMachine.Animator.Play("FallAnimation");
+            stateMachine.Animator.Play("Fall");
         Debug.Log($"[FallState] Entering Fall State at {enterTime:F2}s");
     }
 
@@ -24,6 +24,12 @@ public class FallState : PlayerBaseState
         {
             stateMachine.RB.linearVelocity = new Vector2(targetVelocityX, stateMachine.RB.linearVelocity.y);
         }
+
+        // Flip sprite based on direction
+        if (moveInput.x > 0.01f)
+            stateMachine.transform.localScale = new Vector3(1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
+        else if (moveInput.x < -0.01f)
+            stateMachine.transform.localScale = new Vector3(-1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
 
         // If grounded, transition to Idle/Walk/Run
         if (stateMachine.IsGrounded())
@@ -58,6 +64,10 @@ public class FallState : PlayerBaseState
             stateMachine.SwitchState(stateMachine.ShootState);
             return;
         }
+
+        // Always play fall animation if not already playing
+        if (stateMachine.Animator != null && !stateMachine.Animator.GetCurrentAnimatorStateInfo(0).IsName("Fall"))
+            stateMachine.Animator.Play("Fall");
     }
 
     public override void Exit()

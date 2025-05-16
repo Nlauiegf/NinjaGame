@@ -23,7 +23,7 @@ public class SlideState : PlayerBaseState
 
         // Play slide animation
         if (stateMachine.Animator != null)
-            stateMachine.Animator.Play("SlideAnimation"); // Ensure this animation exists
+            stateMachine.Animator.Play("Slip"); // Ensure this animation exists
 
         Debug.Log($"[SlideState] Entering Slide State at {slideStartTime:F2}s");
         // Apply initial slide impulse or set velocity
@@ -81,6 +81,12 @@ public class SlideState : PlayerBaseState
         // Optional: Allow slight direction control during slide?
         // Vector2 moveInput = stateMachine.GetMovementInput();
         // Apply influence based on moveInput
+
+        // Flip sprite based on direction
+        if (slideDirection.x > 0.01f)
+            stateMachine.transform.localScale = new Vector3(1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
+        else if (slideDirection.x < -0.01f)
+            stateMachine.transform.localScale = new Vector3(-1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
 
         // Debug log
         if (Mathf.FloorToInt(timeSinceSlideStarted * 2) % 2 == 0) // Log every half second

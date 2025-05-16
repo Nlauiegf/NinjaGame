@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.UI;
 using Unity.VisualScripting;
+using UnityEngine.SceneManagement;
 
 // Base class for all player states
 public abstract class PlayerBaseState
@@ -133,6 +134,8 @@ public class PlayerStateMachine : MonoBehaviour
 
     // InputReader abstraction (now a separate class)
     public InputReader InputReader { get; private set; } // Public property for states to access
+
+    private bool isDead = false;
 
     private void Awake()
     {
@@ -428,5 +431,26 @@ public class PlayerStateMachine : MonoBehaviour
         {
             coinText.text = $"Coins: {coinCount}";
         }
+    }
+
+    public void Die()
+    {
+        if (isDead) return;
+        isDead = true;
+        Debug.Log("Player died!");
+        // Optionally play death animation
+        if (Animator != null)
+        {
+            Animator.Play("Death"); // Make sure you have a death animation
+        }
+        // Disable player controls
+        this.enabled = false;
+        // Reload the scene after a short delay
+        Invoke("ReloadLevel", 1.5f); // Wait for animation to play
+    }
+
+    private void ReloadLevel()
+    {
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }

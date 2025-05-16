@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1671676252961424406, guid: 7da3dd984ffcc4c02b49b7134e818e90, type: 3}
       propertyPath: m_Name
-      value: Portal to 1-2 Variant Variant
+      value: Portal to 1-3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

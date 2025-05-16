@@ -9,8 +9,9 @@ public class PlayerIdleState : PlayerBaseState
         // Stop movement if any residual velocity
         if (stateMachine.RB != null)
             stateMachine.RB.linearVelocity = Vector2.zero;
-        // Play Idle Animation (Example)
-        // stateMachine.Animator.Play("IdleAnimationName");
+        // Play Idle Animation
+        if (stateMachine.Animator != null && !stateMachine.Animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+            stateMachine.Animator.Play("Idle");
         Debug.Log("Entering Idle State");
     }
 

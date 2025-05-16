@@ -14,7 +14,7 @@ public class WalkState : PlayerBaseState
         enterTime = Time.time;
         // Play walk animation
         if (stateMachine.Animator != null)
-            stateMachine.Animator.Play("WalkAnimation");
+            stateMachine.Animator.Play("Walk");
         Debug.Log($"[WalkState] Entering Walk State at {enterTime:F2}s");
         // Play walk sound if needed
         // AudioManager.Instance?.Play("WalkSound");
@@ -84,6 +84,15 @@ public class WalkState : PlayerBaseState
             stateMachine.Animator.SetFloat("Horizontal", moveInput.x);
             stateMachine.Animator.SetFloat("Vertical", moveInput.y);
         }
+
+        // Flip sprite based on direction
+        if (moveInput.x > 0.01f)
+            stateMachine.transform.localScale = new Vector3(1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
+        else if (moveInput.x < -0.01f)
+            stateMachine.transform.localScale = new Vector3(-1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
+        // Always play walk animation
+        if (stateMachine.Animator != null && !stateMachine.Animator.GetCurrentAnimatorStateInfo(0).IsName("Walk"))
+            stateMachine.Animator.Play("Walk");
 
         // Debug: log duration in state
         float duration = Time.time - enterTime;

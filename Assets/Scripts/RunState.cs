@@ -13,7 +13,7 @@ public class RunState : PlayerBaseState
         enterTime = Time.time;
         // Play run animation
         if (stateMachine.Animator != null)
-            stateMachine.Animator.Play("RunAnimation");
+            stateMachine.Animator.Play("Dash");
         Debug.Log($"[RunState] Entering Run State at {enterTime:F2}s");
         // Play run sound if needed
         // AudioManager.Instance?.Play("RunSound");
@@ -79,6 +79,15 @@ public class RunState : PlayerBaseState
         // Apply run movement (full speed, only affect horizontal velocity)
         float targetVelocityX = moveInput.x * stateMachine.MoveSpeed;
         stateMachine.RB.linearVelocity = new Vector2(targetVelocityX, stateMachine.RB.linearVelocity.y); // Preserve Y velocity
+
+        // Flip sprite based on direction
+        if (moveInput.x > 0.01f)
+            stateMachine.transform.localScale = new Vector3(1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
+        else if (moveInput.x < -0.01f)
+            stateMachine.transform.localScale = new Vector3(-1, stateMachine.transform.localScale.y, stateMachine.transform.localScale.z);
+        // Always play dash animation
+        if (stateMachine.Animator != null && !stateMachine.Animator.GetCurrentAnimatorStateInfo(0).IsName("Dash"))
+            stateMachine.Animator.Play("Dash");
 
         // Optionally update animation direction
         if (stateMachine.Animator != null)

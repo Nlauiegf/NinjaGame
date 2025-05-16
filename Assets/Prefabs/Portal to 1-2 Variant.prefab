@@ -14,7 +14,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7470062290011736743, guid: 3300f5eb432e6490392af390ac466473, type: 3}
       propertyPath: m_Name
-      value: Portal to 1-1 Variant
+      value: Portal to 1-2 Variant
       objectReference: {fileID: 0}
     - target: {fileID: 8328541893345778740, guid: 3300f5eb432e6490392af390ac466473, type: 3}
       propertyPath: m_LocalPosition.x
@@ -55,6 +55,10 @@ PrefabInstance:
     - target: {fileID: 8328541893345778740, guid: 3300f5eb432e6490392af390ac466473, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8656897855401627188, guid: 3300f5eb432e6490392af390ac466473, type: 3}
+      propertyPath: targetLevelFileName
+      value: Level-1-2.png
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

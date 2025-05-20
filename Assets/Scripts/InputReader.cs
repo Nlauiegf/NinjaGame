@@ -43,7 +43,7 @@ public class InputReader
 
     public bool IsShootPressed()
     {
-        // Use right mouse button for entering/exiting shooting state
-        return Input.GetMouseButton(1);
+        // Use left mouse button for shooting
+        return Input.GetMouseButtonDown(0);
     }
 }

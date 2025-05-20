@@ -24,16 +24,20 @@ public class PlayerStateMachine : MonoBehaviour
 {
     private int coinCount = 0;
     private Text coinText;
+    private const string COIN_TEXT_FORMAT = "Coins: {0}";
 
     void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == "Coin")
-        {
-            Destroy(other.gameObject);
-            coinCount++;
-            UpdateCoinUI();
-        }
+        // This is now handled by the Coin script's OnTriggerEnter2D
     }
+
+    public void AddCoins(int amount)
+    {
+        coinCount += amount;
+        UpdateCoinUI();
+        Debug.Log($"Collected {amount} coin(s)! Total: {coinCount}");
+    }
+
     private bool wasGroundedLastFrame = true;
 
     // --- Coyote time (grounded grace period) ---
@@ -98,6 +102,11 @@ public class PlayerStateMachine : MonoBehaviour
     [Header("Crouch Settings")]
     [SerializeField] public float CrouchSpeedMultiplier { get; private set; } = 0.25f; // Half of WalkState's 0.5 multiplier
 
+    [Header("Shooting Settings")]
+    public float projectileSpeed = 10f;
+    public int projectileDamage = 1;
+    public float shootCooldown = 0.5f; // Time between shots in seconds
+    private float lastShootTime = 0f;
 
     private PlayerBaseState currentState;
 
@@ -137,17 +146,32 @@ public class PlayerStateMachine : MonoBehaviour
 
     private bool isDead = false;
 
+    [Header("Dash Settings")]
+    public float dashSpeed = 12f; // Match bull's dash speed
+    public float dashDuration = 0.5f; // Match bull's dash duration
+    public float dashCooldown = 3f; // Match bull's dash cooldown
+    public float liftAmount = 0.5f; // How high to hop during dash
+    private float lastDashTime = 0f;
+    private bool isDashing = false;
+    private float dashTimer = 0f;
+    private Vector2 dashDirection;
+    private float originalGravityScale;
+    private Vector3 originalPosition;
+
     private void Awake()
     {
         // Get Components
         RB = GetComponent<Rigidbody2D>();
-        Animator = GetComponentInChildren<Animator>(); // Or GetComponent<Animator>()
+        if (RB != null)
+        {
+            originalGravityScale = RB.gravityScale;
+        }
+        Animator = GetComponentInChildren<Animator>();
         if (playerCollider == null)
         {
             playerCollider = GetComponent<CapsuleCollider2D>();
             if (playerCollider != null)
             {
-                // Store initial size/offset if not set via Inspector
                 if (standingColliderSize == Vector2.zero) standingColliderSize = playerCollider.size;
                 if (standingColliderOffset == Vector2.zero && playerCollider.offset != Vector2.zero) standingColliderOffset = playerCollider.offset;
             }
@@ -157,19 +181,16 @@ public class PlayerStateMachine : MonoBehaviour
             }
         }
 
-    
         // Initialize input reader
-        InputReader = new InputReader(); // Instantiate the new InputReader class
+        InputReader = new InputReader();
 
         // Initialize concrete states
-        IdleState = new PlayerIdleState(this); // Instantiate the new PlayerIdleState class
-        // MoveState removed
+        IdleState = new PlayerIdleState(this);
         WalkState = new WalkState(this);
         RunState = new RunState(this);
     
         // Register states
-        stateRegistry[nameof(PlayerIdleState)] = IdleState; // Register the new PlayerIdleState
-        // MoveState registration removed
+        stateRegistry[nameof(PlayerIdleState)] = IdleState;
         stateRegistry[nameof(WalkState)] = WalkState;
         stateRegistry[nameof(RunState)] = RunState;
         JumpState = new JumpState(this);
@@ -177,21 +198,24 @@ public class PlayerStateMachine : MonoBehaviour
         CrouchState = new CrouchState(this);
         stateRegistry[nameof(CrouchState)] = CrouchState;
         SlideState = new SlideState(this);
-        // ... register other states
         WallClingState = new WallClingState(this);
         stateRegistry[nameof(WallClingState)] = WallClingState;
         stateRegistry[nameof(SlideState)] = SlideState;
-        ShootState = new ShootState(this); // Initialize ShootState
-        stateRegistry[nameof(ShootState)] = ShootState; // Register ShootState
-        FallState = new FallState(this); // Initialize FallState
-        stateRegistry[nameof(FallState)] = FallState; // Register FallState
+        ShootState = new ShootState(this);
+        stateRegistry[nameof(ShootState)] = ShootState;
+        FallState = new FallState(this);
+        stateRegistry[nameof(FallState)] = FallState;
 
         // Initialize jumps
         JumpsRemaining = MaxJumps;
 
+        // Get main camera reference
         mainCamera = Camera.main;
-        // Create charge meter UI
-        CreateChargeMeterUI();
+        if (mainCamera == null)
+        {
+            Debug.LogError("No camera tagged as MainCamera found in the scene! Please ensure your camera is tagged as MainCamera.");
+        }
+
         // Create coin counter UI
         CreateCoinCounterUI();
     }
@@ -213,10 +237,46 @@ public class PlayerStateMachine : MonoBehaviour
         bool isGroundedNow = IsGrounded();
         if (!wasGroundedLastFrame && isGroundedNow)
         {
-            // Landed this frame, reset jumps
             JumpsRemaining = Mathf.Max(0, MaxJumps - 1);
         }
         wasGroundedLastFrame = isGroundedNow;
+
+        // Handle dashing
+        if (CanDash && Input.GetMouseButtonDown(1)) // Right mouse button
+        {
+            float timeSinceLastDash = Time.time - lastDashTime;
+            if (timeSinceLastDash >= dashCooldown && !isDashing)
+            {
+                StartDash();
+            }
+            else if (isDashing)
+            {
+                Debug.Log($"Already dashing!");
+            }
+            else
+            {
+                Debug.Log($"Cannot dash yet. Cooldown: {dashCooldown - timeSinceLastDash:F2}s remaining");
+            }
+        }
+
+        // Update dash
+        if (isDashing)
+        {
+            dashTimer -= Time.deltaTime;
+            if (dashTimer <= 0f)
+            {
+                EndDash();
+            }
+            else
+            {
+                // Apply dash velocity
+                if (RB != null)
+                {
+                    // During dash, maintain the exact dash velocity without gravity
+                    RB.linearVelocity = dashDirection * dashSpeed;
+                }
+            }
+        }
 
         currentState?.Tick(Time.deltaTime);
 
@@ -227,6 +287,21 @@ public class PlayerStateMachine : MonoBehaviour
             chargeUI.SetActive(inShootState);
             if (chargeFillImage != null)
                 chargeFillImage.fillAmount = Mathf.Clamp01(currentCharge / chargeTime);
+        }
+
+        // Handle shooting input with cooldown
+        if (InputReader.IsShootPressed())
+        {
+            float timeSinceLastShot = Time.time - lastShootTime;
+            if (timeSinceLastShot >= shootCooldown)
+            {
+                ShootProjectileAtCursor();
+                lastShootTime = Time.time;
+            }
+            else
+            {
+                Debug.Log($"Cannot shoot yet. Cooldown: {shootCooldown - timeSinceLastShot:F2}s remaining");
+            }
         }
     }
 
@@ -327,26 +402,55 @@ public class PlayerStateMachine : MonoBehaviour
     private void ShootProjectileAtCursor()
     {
         if (projectilePrefab == null) {
-            Debug.LogWarning("projectilePrefab is not assigned on PlayerStateMachine!");
+            Debug.LogError("projectilePrefab is not assigned on PlayerStateMachine! Please assign a projectile prefab in the Unity Inspector.");
             return;
         }
         if (mainCamera == null) {
-            Debug.LogWarning("mainCamera is not assigned or found!");
-            return;
+            // Try to find the camera again
+            mainCamera = Camera.main;
+            if (mainCamera == null) {
+                Debug.LogError("No camera tagged as MainCamera found in the scene! Please ensure your camera is tagged as MainCamera.");
+                return;
+            }
         }
+
+        Debug.Log("Attempting to shoot projectile...");
         Vector3 mouseScreenPos = Input.mousePosition;
         Vector3 mouseWorldPos = mainCamera.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, Mathf.Abs(mainCamera.transform.position.z)));
         Vector2 direction = (mouseWorldPos - transform.position).normalized;
-        GameObject proj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
-        Rigidbody2D rb = proj.GetComponent<Rigidbody2D>();
-        if (rb != null)
-        {
-            float projectileSpeed = 10f;
-            rb.linearVelocity = direction * projectileSpeed;
+        
+        // Spawn the projectile slightly in front of the player to avoid self-collision
+        Vector3 spawnPosition = transform.position + new Vector3(direction.x, direction.y, 0) * 0.5f;
+        GameObject proj = Instantiate(projectilePrefab, spawnPosition, Quaternion.identity);
+        Debug.Log($"Projectile instantiated at position: {spawnPosition}");
+        
+        // Check if the projectile has all required components
+        SpriteRenderer spriteRenderer = proj.GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null) {
+            Debug.LogError("Projectile prefab is missing SpriteRenderer component!");
+        } else if (spriteRenderer.sprite == null) {
+            Debug.LogError("Projectile prefab's SpriteRenderer has no sprite assigned!");
         }
-        else
-        {
-            Debug.LogWarning("Instantiated projectile does not have a Rigidbody2D component!");
+
+        Rigidbody2D rb = proj.GetComponent<Rigidbody2D>();
+        if (rb == null) {
+            Debug.LogError("Projectile prefab is missing Rigidbody2D component!");
+        } else {
+            rb.linearVelocity = direction * projectileSpeed;
+            Debug.Log($"Projectile velocity set to: {rb.linearVelocity}");
+        }
+
+        Collider2D collider = proj.GetComponent<Collider2D>();
+        if (collider == null) {
+            Debug.LogError("Projectile prefab is missing Collider2D component!");
+        } else if (!collider.isTrigger) {
+            Debug.LogError("Projectile prefab's Collider2D is not set to 'Is Trigger'!");
+        }
+
+        // Check if the projectile has the Projectile script
+        Projectile projectileScript = proj.GetComponent<Projectile>();
+        if (projectileScript == null) {
+            Debug.LogError("Projectile prefab is missing Projectile script!");
         }
     }
 
@@ -405,9 +509,11 @@ public class PlayerStateMachine : MonoBehaviour
             canvasGO = new GameObject("CoinUICanvas");
             canvas = canvasGO.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasGO.AddComponent<CanvasScaler>();
+            CanvasScaler scaler = canvasGO.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             canvasGO.AddComponent<GraphicRaycaster>();
         }
+
         // Create the coin text
         GameObject coinTextGO = new GameObject("CoinText");
         coinTextGO.transform.SetParent(canvas.transform);
@@ -429,7 +535,7 @@ public class PlayerStateMachine : MonoBehaviour
     {
         if (coinText != null)
         {
-            coinText.text = $"Coins: {coinCount}";
+            coinText.text = string.Format(COIN_TEXT_FORMAT, coinCount);
         }
     }
 
@@ -452,5 +558,64 @@ public class PlayerStateMachine : MonoBehaviour
     private void ReloadLevel()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    private void StartDash()
+    {
+        if (!CanDash) return;
+
+        isDashing = true;
+        dashTimer = dashDuration;
+        lastDashTime = Time.time;
+        originalPosition = transform.position;
+
+        // Get dash direction based on movement input or facing direction
+        Vector2 moveInput = InputReader.GetMovementInput();
+        if (moveInput != Vector2.zero)
+        {
+            dashDirection = moveInput.normalized;
+        }
+        else
+        {
+            // Use facing direction if no movement input
+            dashDirection = new Vector2(transform.localScale.x > 0 ? 1 : -1, 0);
+        }
+
+        // Hop up slightly when starting dash
+        transform.position += Vector3.up * liftAmount;
+
+        // Disable gravity during dash
+        if (RB != null)
+        {
+            RB.gravityScale = 0f;
+        }
+
+        Debug.Log($"Started dashing in direction: {dashDirection}");
+    }
+
+    private void EndDash()
+    {
+        isDashing = false;
+        if (RB != null)
+        {
+            // Restore original gravity scale
+            RB.gravityScale = originalGravityScale;
+            // Reset velocity to prevent sliding
+            RB.linearVelocity = Vector2.zero;
+        }
+
+        // Move back down to original height
+        transform.position -= Vector3.up * liftAmount;
+
+        Debug.Log("Dash ended");
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        // If we hit something while dashing, end the dash
+        if (isDashing)
+        {
+            EndDash();
+        }
     }
 }

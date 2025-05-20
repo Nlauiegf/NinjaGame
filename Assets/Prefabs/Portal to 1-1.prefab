@@ -101,7 +101,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8bdb913664c454d3999231d267315d55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetLevelFileName: Level-1-1.png.png
+  targetLevelFileName: Level-1-1.png-1.png.png
 --- !u!61 &2324254654297447847
 BoxCollider2D:
   m_ObjectHideFlags: 0

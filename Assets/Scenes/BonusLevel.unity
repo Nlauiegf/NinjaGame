@@ -171,7 +171,7 @@ MonoBehaviour:
   - color:
       serializedVersion: 2
       rgba: 4278255615
-    prefab: {fileID: 193220, guid: 4452304ede9b69b4db8ef1d677b45639, type: 3}
+    prefab: {fileID: 1176364225137196520, guid: e4738e70b63d44eeba2a706308a561eb, type: 3}
   - color:
       serializedVersion: 2
       rgba: 4278255360
@@ -187,7 +187,7 @@ MonoBehaviour:
   - color:
       serializedVersion: 2
       rgba: 4294902015
-    prefab: {fileID: 7470062290011736743, guid: 3300f5eb432e6490392af390ac466473, type: 3}
+    prefab: {fileID: 1671676252961424406, guid: 7da3dd984ffcc4c02b49b7134e818e90, type: 3}
   - color:
       serializedVersion: 2
       rgba: 0

@@ -30,7 +30,6 @@ public class CameraFollow : MonoBehaviour
         if (playerTransform != null) {
             Vector3 targetPosition = playerTransform.position + offset;
             transform.position = targetPosition;
-            Debug.Log($"Camera position: {transform.position}, Player position: {playerTransform.position}");
         }
     }
 }

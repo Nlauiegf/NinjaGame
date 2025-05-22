@@ -174,12 +174,15 @@ MonoBehaviour:
     m_Bits: 64
   groundCheckPoint: {fileID: 1200896474919077014}
   groundCheckRadius: 0.2
+  <CrouchSpeed>k__BackingField: 1.25
   projectileSpeed: 10
   projectileDamage: 1
   shootCooldown: 0.5
   dashSpeed: 16
   dashDuration: 0.5
   dashCooldown: 1
+  liftAmount: 0.1
+  <AirControlSpeed>k__BackingField: 4
 --- !u!70 &1779346489392483852
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -242,7 +245,7 @@ Rigidbody2D:
     m_Bits: 0
   m_Interpolate: 0
   m_SleepingMode: 1
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
   m_Constraints: 4
 --- !u!1 &6734205709435017409
 GameObject:
